@@ -31,3 +31,21 @@ where row.Etiqueta_nombre is not null
 match (pdt:PhDThesis {id: row.ID_tesis})
 create (p:Person {id: row.ID_instancia_direccion, name : row.Etiqueta_nombre})-[:SUPERVISE { role: row.Rol }]->(pdt)
 
+//load dissertation jury
+:auto profile USING PERIODIC COMMIT 5000
+load csv with headers from "file:///instancias_pertenencia_tribunales.txt" as row FIELDTERMINATOR ';' with row
+where row.Etiqueta_nombre is not null
+match (pdt:PhDThesis {id: row.ID_tesis})
+create (p:Person {id: row.Id_participacion_trib, name : row.Etiqueta_nombre})-[:IN_JURY { role: row.Rol }]->(pdt)
+
+//config for importing RDF data
+CALL n10s.graphconfig.init( 
+           { handleVocabUris: "IGNORE", handleMultival : "ARRAY", keepLangTag : true } );
+
+CREATE CONSTRAINT n10s_unique_uri ON (r:Resource) ASSERT r.uri IS UNIQUE
+
+//import unesco nomenclature
+CALL n10s.rdf.import.fetch(
+"https://skos.um.es/sparql/?query=" + apoc.text.urlencode($sparql) + "&output=turtle", "Turtle", 
+{ predicateExclusionList : ["http://www.w3.org/2004/02/skos/core#topConceptOf", "http://www.w3.org/2004/02/skos/core#inScheme"]})
+
