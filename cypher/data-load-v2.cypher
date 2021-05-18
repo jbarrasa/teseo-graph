@@ -2,6 +2,8 @@ create index on :University(id);
 create index on :PhdThesis(id);
 
 //load from single denormalized file
+:auto 
+USING PERIODIC COMMIT 1000
 load csv with headers from "file:///jobteseo2021-catalogoteseoMuestra-77-86.csv" as row with row limit 100
 where row.universidad is not null and row.refdownlink is not null
 merge (u:University { id: row.universidad }) on create set u.name = row.Universidad
