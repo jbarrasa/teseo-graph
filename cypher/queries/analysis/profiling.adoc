@@ -58,3 +58,29 @@ and sup.dissertationDate=~ "\d{4}\-\d{2}\-\d{2}" and my.dissertationDate=~ "\d{4
 with  duration.between(date(my.dissertationDate),date(sup.dissertationDate)) as delta 
 RETURN max(delta), min(delta), avg(delta)
 ----
+
+## gender analysis
+
+### male/female ratio in authors and supervisors
+
+[source, python]
+----
+match (p:Person)-[:SUPERVISOR]->()
+return p.gender, count(*)
+----
+
+[source, python]
+----
+match (p:Person)-[:AUTHOR]->()
+return p.gender, count(*)
+----
+
+### supervised theses by gender
+[source, python]
+----
+match (p:Person {gender:"Female"}) with size((p)-[:SUPERVISOR]->()) as supCount
+return "F" as gender, min(supCount), max(supCount), avg(supCount)
+union
+match (p:Person {gender:"Male"}) with size((p)-[:SUPERVISOR]->()) as supCount
+return "M" as gender, min(supCount), max(supCount), avg(supCount)
+----
