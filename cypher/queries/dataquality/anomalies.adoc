@@ -1,0 +1,29 @@
+## Tesis con identico titulo
+
+[source, python]
+----
+match (t:PhDThesis) 
+with t.title as title, count(t) as instances
+where instances > 1
+return title, instances order by instances desc 
+----
+
+## Multiples roles en la misma tesis: Autor y miembro del jurado o supervisor al mismo tiempo
+
+[source, python]
+----
+MATCH (n:Person)-[:AUTHOR]->(t:PhDThesis)<-[:JURY_MEMBER]-(n)
+RETURN t
+----
+
+[source, python]
+----
+MATCH (n:Person)-[:AUTHOR]->(t:PhDThesis)<-[:SUPERVISOR]-(n)
+RETURN count(t)
+----
+
+[source, python]
+----
+MATCH (n:Person)-[:JURY_MEMBER]->(t:PhDThesis)<-[:SUPERVISOR]-(n)
+RETURN count(t)
+----
