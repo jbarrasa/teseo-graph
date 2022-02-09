@@ -1,0 +1,60 @@
+## Análisis numero de tesis por autor
+[source, python]
+----
+MATCH (n:Person) where (n)-[:AUTHOR]->() 
+WITH  n, size((n)-[:AUTHOR]->()) as thCount
+RETURN max(thCount), min(thCount), avg(thCount), percentileCont(thCount,0.96)
+----
+
+## Autores de multiples tesis
+[source, python]
+----
+MATCH (n:Person) where size((n)-[:AUTHOR]->()) > 1
+RETURN count(n)
+----
+
+## Autor de 5 tesis (detalle)
+
+[source, python]
+----
+match (p:Person { name : "Saban Cuño, Mario Javier"})-[a:AUTHOR]->(t)-[id:IN_DEPT]->(d)-[bt:BELONGS_TO]->(uni)
+return *
+----
+
+
+## Conectividad de presidentes (red social)
+
+[source, python]
+----
+MATCH (p:Person) where (p)-[:JURY_MEMBER { role: "President"}]->() 
+MATCH (p)-[:SUPERVISOR|JURY_MEMBER|AUTHOR*..2]-(con:Person) 
+WITH p, count(distinct con) as con
+RETURN max(con), min(con), avg(con), percentileCont(con,0.75), percentileCont(con,0.9)
+----
+
+## Camino mas corto entre X e Y 
+
+[source, python]
+----
+match p = shortestPath((:Person { name : "Gomez Perez, Asuncion"})-[:AUTHOR|JURY_MEMBER|SUPERVISOR*]-(:Person { name : "Sanchez Jimenez, Rodrigo"})) 
+return p
+----
+
+
+## your "Sánchez number"
+
+[source, python]
+----
+MATCH p = shortestPath((:Person { name : "Sanchez Perez-castejon, Pedro"})-[:AUTHOR|JURY_MEMBER|SUPERVISOR*]-(:Person { name : "Sanchez Jimenez, Rodrigo"})) return p
+----
+
+## time between my dissertation and the dissertation of my first supervised thesis
+
+[source, python]
+----
+MATCH (sup:PhDThesis)<-[:SUPERVISOR]-(n:Person)-[:AUTHOR]->(my:PhDThesis)
+where sup.dissertationDate is not null  and my.dissertationDate is not null
+and sup.dissertationDate=~ "\d{4}\-\d{2}\-\d{2}" and my.dissertationDate=~ "\d{4}\-\d{2}\-\d{2}"
+with  duration.between(date(my.dissertationDate),date(sup.dissertationDate)) as delta 
+RETURN max(delta), min(delta), avg(delta)
+----
