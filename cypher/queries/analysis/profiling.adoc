@@ -84,3 +84,19 @@ union
 match (p:Person {gender:"Male"}) with size((p)-[:SUPERVISOR]->()) as supCount
 return "M" as gender, min(supCount), max(supCount), avg(supCount)
 ----
+
+
+### gender affinity author/supervisor by year
+[source, python]
+----
+unwind range(2015,2021) as year
+match (au:Person)-[:AUTHOR]->(p:PhDThesis { year: year })<-[:SUPERVISOR]-(sup:Person) 
+with year, au.gender as author_gender, sup.gender as supervisor_gender, count(*) as count
+where author_gender in ["Male","Female"] and supervisor_gender in ["Male","Female"]
+with  year, collect({key : "A:"+author_gender +"/S:"+supervisor_gender , val:count}) as dt
+with  year, dt, apoc.coll.sum([x in dt | x.val ]) as yeartotal
+return year, [x in dt where x.key = "A:Female/S:Female" | x.val ][0] / yeartotal  as ` A:F-S:F`,
+[x in dt where x.key = "A:Female/S:Male" | x.val ][0] / yeartotal  as ` A:F-S:M`,
+[x in dt where x.key = "A:Male/S:Female" | x.val ][0] / yeartotal  as ` A:M-S:F`,
+[x in dt where x.key = "A:Male/S:Male" | x.val ][0] / yeartotal  as ` A:M-S:M`
+----
